@@ -1,0 +1,7 @@
+# Safety net on top of each project's own .gitignore
+node_modules/
+.env
+.env.*
+!.env.example
+build/
+*.log
