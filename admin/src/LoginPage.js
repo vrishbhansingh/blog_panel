@@ -8,7 +8,7 @@ const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [branding, setBranding] = useState({ companyName: "MMW Machine", logoUrl: "" });
+  const [branding, setBranding] = useState({ companyName: "Blog Panel", logoUrl: "" });
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -25,9 +25,10 @@ const LoginPage = () => {
   return (
     <main className="mmw-login-page">
       <header className="mmw-login-hero">
-        <img className="mmw-brand-logo" src={branding.logoUrl || "/mmw-logo.png"} alt={branding.companyName} />
+        <img className="mmw-brand-logo" src={branding.logoUrl || "/blog-panel-logo.png"} alt={branding.companyName} />
       </header>
       <section className="mmw-login-stage">
+        <img className="mmw-admin-character" src="/blog-panel-character.png" alt="" aria-hidden="true" />
         <form onSubmit={handleLogin} className="login-card">
           <h2>Login Panel</h2><p>Please login to admin dashboard</p>
           {error && <div className="notice error" role="alert">{error}</div>}
@@ -38,7 +39,6 @@ const LoginPage = () => {
           <div className="mmw-login-options"><label><input type="checkbox" /> Remember me</label><button type="button">Forgot password?</button></div>
           <button className="login-submit" disabled={loading}>{loading ? "Signing in..." : "Login"}</button>
         </form>
-        <img className="mmw-admin-character" src="/admin-character.png" alt="Admin welcome character" />
       </section>
     </main>
   );
