@@ -30,7 +30,7 @@ const Home = () => {
         <article className="panel"><div className="panel-head"><div><span className="eyebrow">RECENT ACTIVITY</span><h2>Latest content</h2></div><Link to="/edit-blog">View all</Link></div>
           <div className="content-list">{recent.length ? recent.map((blog) => <div className="content-row" key={blog._id}><div className="content-dot">{blog.title?.charAt(0)}</div><div><strong>{blog.title}</strong><small>{blog.websiteId?.name || "Website"} · {new Date(blog.createdAt).toLocaleDateString()}</small></div><span className={`status ${blog.status || "draft"}`}>{blog.status || "draft"}</span></div>) : <div className="empty-state">No content yet. Create your first blog.</div>}</div>
         </article>
-        <article className="panel quick-panel"><span className="eyebrow">QUICK ACTIONS</span><h2>Move faster</h2><Link to="/websites">Configure a website <b>→</b></Link><Link to="/add-blog">Write a new article <b>→</b></Link><Link to="/add-product">Add a product <b>→</b></Link><Link to="/categories">Organize categories <b>→</b></Link></article>
+        <article className="panel quick-panel"><span className="eyebrow">QUICK ACTIONS</span><h2>Move faster</h2><Link to="/websites">Configure a website <b>→</b></Link><Link to="/add-blog">Write a new article <b>→</b></Link><Link to="/add-product">Add a product <b>→</b></Link><Link to="/blog-categories">Organize blog categories <b>→</b></Link></article>
       </section>
     </div>
   );
