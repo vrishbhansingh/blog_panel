@@ -16,6 +16,7 @@ import WebsiteManager from "./components/WebsiteManager";
 import SEOManager from "./components/SEOManager";
 import BlogCategoryManager from "./components/BlogCategoryManager";
 import Enquiries from "./components/Enquiries";
+import Profile from "./components/Profile";
 import "./App.css";
 
 const Guard = ({ children }) => <ProtectedRoute>{children}</ProtectedRoute>;
@@ -43,6 +44,7 @@ function AppContent() {
             <Route path="/edit-blog" element={<Guard><BlogList /></Guard>} />
             <Route path="/edit-blog/:id" element={<Guard><EditBlog /></Guard>} />
             <Route path="/blog-categories" element={<Guard><BlogCategoryManager /></Guard>} />
+            <Route path="/profile" element={<Guard><Profile /></Guard>} />
           </Routes>
         </main>
       </div>

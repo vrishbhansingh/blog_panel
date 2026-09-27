@@ -12,6 +12,7 @@ const blogRoutes = require("./routes/blogRoutes.js");
 const blogCategoryRoutes = require("./routes/blogCategoryRoutes.js");
 const websiteRoutes = require("./routes/websiteRoutes.js");
 const inquiryRoutes = require("./routes/inquiryRoutes.js");
+const settingsRoutes = require("./routes/settingsRoutes.js");
 
 const app = express();
 const PORT = process.env.PORT || 5014;
@@ -32,6 +33,7 @@ app.use("/api/blogs", blogRoutes);
 app.use("/api/blog-categories", blogCategoryRoutes);
 app.use("/api/websites", websiteRoutes);
 app.use("/api/inquiries", inquiryRoutes);
+app.use("/api/settings", settingsRoutes);
 
 app.get("/health", (req, res) => {
   res.json({ ok: true, database: mongoose.connection.readyState === 1 ? "connected" : "disconnected" });

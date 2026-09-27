@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "./api";
 
@@ -8,7 +8,12 @@ const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [branding, setBranding] = useState({ companyName: "MMW Machine", logoUrl: "" });
   const navigate = useNavigate();
+
+  useEffect(() => {
+    api.get("/api/settings").then((res) => setBranding((current) => ({ ...current, ...res.data }))).catch(() => {});
+  }, []);
   const handleLogin = async (event) => {
     event.preventDefault(); setLoading(true); setError("");
     if (!username.trim()) { setError("Please enter the admin username."); setLoading(false); return; }
@@ -20,7 +25,7 @@ const LoginPage = () => {
   return (
     <main className="mmw-login-page">
       <header className="mmw-login-hero">
-        <img className="mmw-brand-logo" src="/mmw-logo.png" alt="MMW Mohindra Mechanical Works" />
+        <img className="mmw-brand-logo" src={branding.logoUrl || "/mmw-logo.png"} alt={branding.companyName} />
       </header>
       <section className="mmw-login-stage">
         <form onSubmit={handleLogin} className="login-card">
