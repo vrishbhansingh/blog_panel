@@ -7,6 +7,7 @@ const path = require("path");
 
 const categoryRoutes = require("./routes/categoryRoutes.js");
 const productRoutes = require("./routes/productRoutes.js");
+const productCategoryRoutes = require("./routes/productCategoryRoutes.js");
 const accPriceRoutes = require("./routes/accpriceRoutes.js");
 const blogRoutes = require("./routes/blogRoutes.js");
 const blogCategoryRoutes = require("./routes/blogCategoryRoutes.js");
@@ -28,6 +29,7 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 app.use("/categories", categoryRoutes);
 app.use("/products", productRoutes);
+app.use("/api/product-categories", productCategoryRoutes);
 app.use("/accprice", accPriceRoutes);
 app.use("/api/blogs", blogRoutes);
 app.use("/api/blog-categories", blogCategoryRoutes);

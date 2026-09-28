@@ -54,6 +54,7 @@ router.post('/', adminAuth, productUploads, async (req, res) => {
     });
 
     await product.save();
+    await product.populate('category');
     res.status(201).send(product);
   } catch (error) {
     res.status(400).send(error);
@@ -134,7 +135,7 @@ router.patch('/:id', adminAuth, productUploads, async (req, res) => {
     const product = await Product.findByIdAndUpdate(req.params.id, updates, {
       new: true,
       runValidators: true
-    });
+    }).populate('category').populate('accessories').populate('relatedProducts', 'name image slug');
 
     if (!product) return res.status(404).send();
     res.send(product);

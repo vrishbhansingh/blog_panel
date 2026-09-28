@@ -5,7 +5,8 @@ import api from "../api";
 const links = [
   ["/", "Overview", "OV"], ["/websites", "Websites", "WS"], ["/seo", "SEO", "SE"],
   ["/add-blog", "Create blog", "CB"], ["/edit-blog", "Blog library", "BL"], ["/blog-categories", "Blog Categories", "BC"],
-  ["/products", "Products", "PR"], ["/profile", "Profile", "PF"],
+  ["/add-product", "Add product", "AP"], ["/products", "Products", "PR"], ["/product-categories", "Product Categories", "PC"],
+  ["/profile", "Profile", "PF"],
 ];
 
 const Navbar = () => {
