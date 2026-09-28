@@ -41,6 +41,16 @@ app.get("/health", (req, res) => {
   res.json({ ok: true, database: mongoose.connection.readyState === 1 ? "connected" : "disconnected" });
 });
 
+// Serves the built admin panel (admin/build copied here as "public") from the same
+// Node app, so shared hosting only needs one app/one domain for panel + API.
+const adminBuildPath = path.join(__dirname, "public");
+if (require("fs").existsSync(path.join(adminBuildPath, "index.html"))) {
+  app.use(express.static(adminBuildPath));
+  app.get(/^(?!\/(api|uploads|categories|products|accprice|health)\b).*/, (req, res) => {
+    res.sendFile(path.join(adminBuildPath, "index.html"));
+  });
+}
+
 async function start() {
   if (!process.env.MONGODB_URI) {
     console.error("MONGODB_URI is missing. Copy .env.example to .env and add the Atlas URI.");
