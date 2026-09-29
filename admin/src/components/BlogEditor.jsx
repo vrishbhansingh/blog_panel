@@ -1,8 +1,10 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import api from "../api";
-import { Editor } from "@tinymce/tinymce-react";
-import "../tinymceSetup";
+import ReactQuill from "react-quill-new";
+import "react-quill-new/dist/quill.snow.css";
 import { useNavigate } from "react-router-dom";
+
+const quillFormats = ["header", "bold", "italic", "underline", "strike", "blockquote", "list", "indent", "link", "image", "video", "code-block"];
 
 const tabs = ["Content", "SEO", "Images", "FAQ", "Related"];
 const emptyLink = () => ({ label: "", url: "" });
@@ -56,6 +58,37 @@ const BlogEditor = () => {
     catch (error) { alert(error.response?.data?.error || "Image upload failed"); }
   };
 
+  const quillRef = useRef(null);
+  const quillImageHandler = () => {
+    const input = document.createElement("input");
+    input.type = "file"; input.accept = "image/*";
+    input.onchange = async () => {
+      const file = input.files?.[0];
+      if (!file) return;
+      try {
+        const url = await uploadImage(file);
+        const editor = quillRef.current?.getEditor();
+        const range = editor?.getSelection(true);
+        editor?.insertEmbed(range ? range.index : 0, "image", url, "user");
+        editor?.setSelection((range ? range.index : 0) + 1);
+      } catch (error) { alert(error.response?.data?.error || "Image upload failed"); }
+    };
+    input.click();
+  };
+  const quillModules = useMemo(() => ({
+    toolbar: {
+      container: [
+        [{ header: [2, 3, false] }],
+        ["bold", "italic", "underline", "strike"],
+        [{ list: "ordered" }, { list: "bullet" }, { indent: "-1" }, { indent: "+1" }],
+        ["blockquote", "code-block"],
+        ["link", "image", "video"],
+        ["clean"],
+      ],
+      handlers: { image: quillImageHandler },
+    },
+  }), []); // eslint-disable-line react-hooks/exhaustive-deps
+
   const updateArrayItem = (field, index, key, value) => setForm((current) => ({ ...current, [field]: current[field].map((item, itemIndex) => itemIndex === index ? { ...item, [key]: value } : item) }));
   const removeArrayItem = (field, index) => setForm((current) => ({ ...current, [field]: current[field].filter((_, itemIndex) => itemIndex !== index) }));
   const toggleId = (field, id) => setForm((current) => ({ ...current, [field]: current[field].includes(id) ? current[field].filter((value) => value !== id) : [...current[field], id] }));
@@ -81,7 +114,7 @@ const BlogEditor = () => {
     {activeTab === "Content" && <div className="category-shortcut">Need a new category?<button type="button" onClick={() => navigate("/blog-categories")}>Manage blog categories</button></div>}
     <section className="blog-editor-card">
       {activeTab === "Content" && <div className="compact-featured-fields"><label className="seo-field">Blog Card Image *<input type="file" accept="image/*" onChange={(e) => uploadFor(e.target.files?.[0], "featuredImage")} /></label><Input label="Image ALT Text" name="featuredImageAlt" />{form.featuredImage && <img src={form.featuredImage} alt={form.featuredImageAlt || "Blog card preview"} />}</div>}
-      {activeTab === "Content" && <div className="tab-pane"><div className="editor-grid"><label className="seo-field wide">Blog Title *<input value={form.title} onChange={(e) => handleTitle(e.target.value)} placeholder="Enter blog title" /></label><Input label="Slug / Page URL" name="slug" /><label className="seo-field">Website *<select value={form.websiteId} onChange={(e) => setField("websiteId", e.target.value)}><option value="">Choose website</option>{websites.map((item) => <option key={item._id} value={item._id}>{item.name}</option>)}</select></label><label className="seo-field">Category *<select value={form.categoryId} onChange={(e) => setField("categoryId", e.target.value)} required><option value="">Choose category</option>{categories.map((item) => <option key={item._id} value={item._id}>{item.name}</option>)}</select></label><Input label="Tags (comma separated)" name="tags" /><Input label="Author Name" name="authorName" /><Input label="Publish Date" name="publishDate" type="date" /><label className="seo-field wide">Short Description / Excerpt <span>{form.excerpt.length}/500</span><textarea maxLength="500" value={form.excerpt} onChange={(e) => setField("excerpt", e.target.value)} /></label></div><label className="editor-content-label">Main Blog Content *</label><Editor licenseKey="gpl" value={form.content} init={{ height: 560, menubar: true, plugins: ["link","lists","image","table","code","autolink","preview","anchor","fullscreen","searchreplace","wordcount","media"], toolbar: "undo redo | blocks | bold italic underline | alignleft aligncenter alignright | bullist numlist | link image media table | code preview fullscreen", automatic_uploads: true, file_picker_types: "image", file_picker_callback: (callback) => { const input = document.createElement("input"); input.type="file"; input.accept="image/*"; input.onchange=async()=>{if(input.files?.[0]) callback(await uploadImage(input.files[0]),{alt:input.files[0].name});}; input.click(); }, images_upload_handler: async (blobInfo) => uploadImage(blobInfo.blob()) }} onEditorChange={(value) => setField("content", value)} /></div>}
+      {activeTab === "Content" && <div className="tab-pane"><div className="editor-grid"><label className="seo-field wide">Blog Title *<input value={form.title} onChange={(e) => handleTitle(e.target.value)} placeholder="Enter blog title" /></label><Input label="Slug / Page URL" name="slug" /><label className="seo-field">Website *<select value={form.websiteId} onChange={(e) => setField("websiteId", e.target.value)}><option value="">Choose website</option>{websites.map((item) => <option key={item._id} value={item._id}>{item.name}</option>)}</select></label><label className="seo-field">Category *<select value={form.categoryId} onChange={(e) => setField("categoryId", e.target.value)} required><option value="">Choose category</option>{categories.map((item) => <option key={item._id} value={item._id}>{item.name}</option>)}</select></label><Input label="Tags (comma separated)" name="tags" /><Input label="Author Name" name="authorName" /><Input label="Publish Date" name="publishDate" type="date" /><label className="seo-field wide">Short Description / Excerpt <span>{form.excerpt.length}/500</span><textarea maxLength="500" value={form.excerpt} onChange={(e) => setField("excerpt", e.target.value)} /></label></div><label className="editor-content-label">Main Blog Content *</label><div className="quill-editor-wrap"><ReactQuill ref={quillRef} theme="snow" value={form.content} onChange={(value) => setField("content", value)} modules={quillModules} formats={quillFormats} /></div></div>}
       {activeTab === "SEO" && <div className="tab-pane editor-grid"><Input label="Focus Keyword" name="focusKeyword" /><Input label="Secondary Keywords (comma separated)" name="secondaryKeywords" /><Input label="Meta Title" name="metaTitle" maxLength={60} /><label className="seo-field wide">Meta Description <span>{form.metaDescription.length}/160</span><textarea maxLength="160" value={form.metaDescription} onChange={(e) => setField("metaDescription", e.target.value)} /></label><Input label="Canonical URL" name="canonicalUrl" type="url" /><Input label="OG Title" name="ogTitle" maxLength={60} /><label className="seo-field wide">OG Description<textarea value={form.ogDescription} onChange={(e) => setField("ogDescription", e.target.value)} /></label><label className="seo-field">Schema Type<select value={form.schemaType} onChange={(e) => setField("schemaType", e.target.value)}><option>BlogPosting</option><option>Article</option></select></label><label className="seo-field">Indexing<select value={form.robotsIndex} onChange={(e) => setField("robotsIndex", e.target.value)}><option value="index">Index</option><option value="noindex">Noindex</option></select></label><label className="seo-field">Link crawling<select value={form.robotsFollow} onChange={(e) => setField("robotsFollow", e.target.value)}><option value="follow">Follow</option><option value="nofollow">Nofollow</option></select></label></div>}
       {activeTab === "Images" && <div className="tab-pane image-fields"><ImageUpload label="Featured Image" value={form.featuredImage} onFile={(file) => uploadFor(file,"featuredImage")} /><Input label="Featured Image ALT Text" name="featuredImageAlt" /><ImageUpload label="Open Graph Image" value={form.ogImage} onFile={(file) => uploadFor(file,"ogImage")} /><label className="seo-field wide">Additional Blog Images<input type="file" accept="image/*" multiple onChange={(e) => uploadAdditional(e.target.files)} /></label>{form.images.length > 0 && <div className="selected-images wide">{form.images.map((url,index)=><figure key={url}><img src={url} alt={`Selected ${index+1}`} /><figcaption>Image {index+1}<button onClick={()=>setField("images",form.images.filter((image)=>image!==url))}>Remove</button></figcaption></figure>)}</div>}</div>}
       {activeTab === "FAQ" && <div className="tab-pane"><div className="repeat-head"><div><h3>FAQ Section</h3><p>Add questions for users and FAQ schema.</p></div><button onClick={()=>setField("faqs",[...form.faqs,{question:"",answer:""}])}>+ Add FAQ</button></div>{form.faqs.map((item,index)=><div className="repeat-row" key={index}><input value={item.question} onChange={(e)=>updateArrayItem("faqs",index,"question",e.target.value)} placeholder={`Question ${index+1}`} /><textarea value={item.answer} onChange={(e)=>updateArrayItem("faqs",index,"answer",e.target.value)} placeholder="Answer" /><button onClick={()=>removeArrayItem("faqs",index)}>Remove</button></div>)}</div>}

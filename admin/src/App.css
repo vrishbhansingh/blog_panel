@@ -2035,6 +2035,19 @@
   font-size: 12px;
   font-weight: 700;
 }
+.quill-editor-wrap .ql-toolbar.ql-snow {
+  border-radius: 9px 9px 0 0;
+  border-color: #dce1d8;
+  background: #fbfcf9;
+}
+.quill-editor-wrap .ql-container.ql-snow {
+  border-radius: 0 0 9px 9px;
+  border-color: #dce1d8;
+  font-size: 15px;
+}
+.quill-editor-wrap .ql-editor {
+  min-height: 480px;
+}
 .image-upload-box {
   min-height: 225px;
   padding: 16px;
