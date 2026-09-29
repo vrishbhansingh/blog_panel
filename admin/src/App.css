@@ -1678,7 +1678,8 @@
   gap: 12px;
   padding: 0 4px 28px;
 }
-.mmw-sidebar-brand img {
+.mmw-sidebar-brand img,
+.mmw-sidebar-brand .brand-logo-placeholder {
   display: block;
   flex: 0 0 58px;
   width: 58px;
@@ -1879,7 +1880,8 @@
   .mmw-sidebar-brand {
     padding-bottom: 12px;
   }
-  .mmw-sidebar-brand img {
+  .mmw-sidebar-brand img,
+  .mmw-sidebar-brand .brand-logo-placeholder {
     width: 48px;
     height: 40px;
   }

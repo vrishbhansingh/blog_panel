@@ -38,13 +38,12 @@ const Profile = () => {
     }
   };
 
-  const uploadLogo = async (event) => {
-    event.preventDefault();
-    if (!logoFile) { setNotice("Choose a logo image first"); return; }
+  const uploadLogo = async (file) => {
+    if (!file) { setNotice("Choose a logo image first"); return; }
     setSavingLogo(true); setNotice("");
     try {
       const body = new FormData();
-      body.append("logo", logoFile);
+      body.append("logo", file);
       const { data } = await api.post("/api/settings/logo", body, { headers: { "Content-Type": "multipart/form-data" } });
       setLogoUrl(data.logoUrl);
       setLogoFile(null);
@@ -55,6 +54,17 @@ const Profile = () => {
     } finally {
       setSavingLogo(false);
     }
+  };
+
+  const chooseAndUploadLogo = (event) => {
+    const file = event.target.files?.[0] || null;
+    setLogoFile(file);
+    // Upload immediately using the file straight from the change event, rather
+    // than waiting for a separate button click and reading it back from state
+    // (state wouldn't be updated yet at that point anyway). Some browsers also
+    // swallow the very next click right after the native file picker closes,
+    // which made the old two-step select-then-click flow feel broken.
+    if (file) uploadLogo(file);
   };
 
   const changePassword = async (event) => {
@@ -96,13 +106,13 @@ const Profile = () => {
 
       <section className="panel" style={{ marginBottom: 24 }}>
         <div className="panel-head"><div><span className="eyebrow">BRANDING</span><h2>Logo</h2></div></div>
-        <form className="form-grid" onSubmit={uploadLogo}>
+        <form className="form-grid" onSubmit={(e) => { e.preventDefault(); uploadLogo(logoFile); }}>
           <div className="image-upload-box wide">
             <strong>Current logo</strong>
             {logoUrl ? <img src={logoUrl} alt="Company logo" style={{ maxWidth: 160, maxHeight: 80, objectFit: "contain" }} /> : <span>No custom logo uploaded — using the default</span>}
-            <label>Choose new logo<input type="file" accept="image/*" onChange={(e) => setLogoFile(e.target.files?.[0] || null)} /></label>
+            <label>Choose new logo<input type="file" accept="image/*" onChange={chooseAndUploadLogo} disabled={savingLogo} /></label>
           </div>
-          <div className="save-bar wide"><span>PNG, JPG, WebP, GIF or SVG · max 2 MB</span><button type="submit" disabled={savingLogo || !logoFile}>{savingLogo ? "Uploading…" : "Upload logo"}</button></div>
+          <div className="save-bar wide"><span>PNG, JPG, WebP, GIF or SVG · max 2 MB — uploads automatically once chosen</span>{logoFile && <button type="submit" disabled={savingLogo}>{savingLogo ? "Uploading…" : "Retry upload"}</button>}</div>
         </form>
       </section>
 
