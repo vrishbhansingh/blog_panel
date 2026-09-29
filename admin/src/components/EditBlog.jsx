@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import api from "../api";
 import { Editor } from "@tinymce/tinymce-react";
+import "../tinymceSetup";
 import { useParams, useNavigate } from "react-router-dom";
 
 const API_BASE = "/api";
@@ -260,7 +261,7 @@ const EditBlog = () => {
       {/* Editor */}
       <label>Blog Content *</label>
       <Editor
-        apiKey="e4yuc3ytrhl38jxs25ek9zh65kuk0llgp0nmj8olmzhocpnq"
+        licenseKey="gpl"
         value={content}
         init={{
           height: 500,
