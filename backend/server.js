@@ -64,6 +64,9 @@ async function start() {
   try {
     await mongoose.connect(process.env.MONGODB_URI);
     console.log("Connected to MongoDB");
+    // Drops indexes no longer declared on a model (e.g. the old global-unique
+    // slug index, replaced by a per-website one) and creates any new ones.
+    await require("./models/BlogCategory.js").syncIndexes();
     app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
   } catch (error) {
     console.error("Could not connect to MongoDB:", error.message);
