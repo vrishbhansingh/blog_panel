@@ -33,14 +33,16 @@ const EditBlog = () => {
       .catch((err) => console.error(err));
   }, []);
 
-  // Fetch blog categories (all, so an already-assigned but now-inactive
-  // category still shows correctly when editing this blog)
+  // Categories are scoped per website. Fetch once the blog's website is known
+  // (no status filter, so an already-assigned but now-inactive category still
+  // shows correctly when editing this blog).
   useEffect(() => {
+    if (!websiteId) return;
     api
-      .get(`${API_BASE}/blog-categories`)
+      .get(`${API_BASE}/blog-categories`, { params: { websiteId } })
       .then((res) => setCategories(res.data || []))
       .catch((err) => console.error(err));
-  }, []);
+  }, [websiteId]);
 
   // Fetch blog details
   useEffect(() => {
@@ -203,7 +205,7 @@ const EditBlog = () => {
       <select
         className="form-control mb-3"
         value={websiteId}
-        onChange={(e) => setWebsiteId(e.target.value)}
+        onChange={(e) => { setWebsiteId(e.target.value); setCategoryId(""); }}
       >
         <option value="">Choose Website</option>
          {websites.map((w) => (

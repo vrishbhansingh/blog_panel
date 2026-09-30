@@ -5,6 +5,8 @@ const blankForm = { name: "", slug: "", status: "active" };
 const slugify = (value) => value.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 
 const BlogCategoryManager = () => {
+  const [websites, setWebsites] = useState([]);
+  const [websiteId, setWebsiteId] = useState("");
   const [categories, setCategories] = useState([]);
   const [search, setSearch] = useState("");
   const [form, setForm] = useState(blankForm);
@@ -12,12 +14,25 @@ const BlogCategoryManager = () => {
   const [notice, setNotice] = useState("");
   const [saving, setSaving] = useState(false);
 
+  useEffect(() => {
+    api.get("/api/websites/all")
+      .then(({ data }) => {
+        setWebsites(data.websites || []);
+        setWebsiteId((current) => current || data.websites?.[0]?._id || "");
+      })
+      .catch(() => setNotice("Could not load websites"));
+  }, []);
+
   const loadCategories = async () => {
-    const { data } = await api.get("/api/blog-categories");
+    if (!websiteId) { setCategories([]); return; }
+    const { data } = await api.get("/api/blog-categories", { params: { websiteId } });
     setCategories(data || []);
   };
 
-  useEffect(() => { loadCategories().catch(() => setNotice("Could not load blog categories")); }, []);
+  useEffect(() => {
+    resetForm();
+    if (websiteId) loadCategories().catch(() => setNotice("Could not load blog categories"));
+  }, [websiteId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const visible = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -38,9 +53,10 @@ const BlogCategoryManager = () => {
   const submitForm = async (event) => {
     event.preventDefault();
     if (!form.name.trim()) { setNotice("Category name is required"); return; }
+    if (!websiteId) { setNotice("Choose a website first"); return; }
     setSaving(true); setNotice("");
     try {
-      const payload = { name: form.name.trim(), slug: slugify(form.slug || form.name), status: form.status };
+      const payload = { name: form.name.trim(), slug: slugify(form.slug || form.name), status: form.status, websiteId };
       if (editingId) {
         const { data } = await api.put(`/api/blog-categories/${editingId}`, payload);
         setCategories((items) => items.map((item) => (item._id === editingId ? data : item)));
@@ -79,11 +95,17 @@ const BlogCategoryManager = () => {
         <div>
           <span className="eyebrow">CONTENT TAXONOMY</span>
           <h1>Blog Categories</h1>
-          <p>Manage the categories blogs can be published under across every website.</p>
+          <p>Each website has its own category list. Choose a website to manage its categories.</p>
         </div>
+        <select value={websiteId} onChange={(e) => setWebsiteId(e.target.value)} style={{ height: "fit-content" }}>
+          <option value="">Choose website</option>
+          {websites.map((site) => <option key={site._id} value={site._id}>{site.name}</option>)}
+        </select>
       </header>
       {notice && <div className="notice">{notice}</div>}
+      {!websiteId && <div className="empty-state">Choose a website above to see and manage its categories.</div>}
 
+      {websiteId && <>
       <section className="panel" style={{ marginBottom: 24 }}>
         <div className="panel-head"><div><span className="eyebrow">{editingId ? "EDIT CATEGORY" : "ADD CATEGORY"}</span><h2>{editingId ? "Update category" : "New category"}</h2></div></div>
         <form className="form-grid" onSubmit={submitForm}>
@@ -125,6 +147,7 @@ const BlogCategoryManager = () => {
           </table>
         </div>
       </section>
+      </>}
     </div>
   );
 };

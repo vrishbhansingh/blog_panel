@@ -32,13 +32,22 @@ const BlogEditor = () => {
   });
 
   useEffect(() => {
-    Promise.allSettled([api.get("/api/websites/all"), api.get("/api/blog-categories", { params: { status: "active" } }), api.get("/products"), api.get("/api/blogs")]).then(([sites, cats, prods, posts]) => {
+    Promise.allSettled([api.get("/api/websites/all"), api.get("/products"), api.get("/api/blogs")]).then(([sites, prods, posts]) => {
       if (sites.status === "fulfilled") setWebsites(sites.value.data.websites || []);
-      if (cats.status === "fulfilled") setCategories(cats.value.data || []);
       if (prods.status === "fulfilled") setProducts(prods.value.data || []);
       if (posts.status === "fulfilled") setBlogs(posts.value.data || []);
     });
   }, []);
+
+  // Categories are scoped per website, so refetch whenever the chosen website
+  // changes, and drop any category picked for the previous website.
+  useEffect(() => {
+    if (!form.websiteId) { setCategories([]); return; }
+    api.get("/api/blog-categories", { params: { status: "active", websiteId: form.websiteId } })
+      .then(({ data }) => setCategories(data || []))
+      .catch(() => setCategories([]));
+    setForm((current) => ({ ...current, categoryId: "" }));
+  }, [form.websiteId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const setField = (name, value) => setForm((current) => ({ ...current, [name]: value }));
   const slugify = (value) => value.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");

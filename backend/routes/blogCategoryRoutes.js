@@ -1,6 +1,7 @@
 const express = require("express");
 const BlogCategory = require("../models/BlogCategory.js");
 const Blog = require("../models/Blog.js");
+const Website = require("../models/Website.js");
 const adminAuth = require("../middleware/adminAuth.js");
 
 const router = express.Router();
@@ -10,7 +11,7 @@ function slugify(value = "") {
 }
 
 function handleError(res, error) {
-  if (error.code === 11000) return res.status(409).json({ error: "This slug already exists" });
+  if (error.code === 11000) return res.status(409).json({ error: "This slug already exists for the selected website" });
   if (error.name === "ValidationError" || error.name === "CastError") return res.status(400).json({ error: error.message });
   console.error(error);
   return res.status(500).json({ error: "Server error" });
@@ -19,19 +20,23 @@ function handleError(res, error) {
 // Create a blog category
 router.post("/", adminAuth, async (req, res) => {
   try {
-    const { name, slug, status } = req.body;
+    const { name, slug, status, websiteId } = req.body;
     if (!name) return res.status(400).json({ error: "Category name is required" });
-    const category = await BlogCategory.create({ name, slug: slugify(slug || name), status: status || "active" });
+    if (!websiteId) return res.status(400).json({ error: "Website is required" });
+    const website = await Website.findById(websiteId).catch(() => null);
+    if (!website) return res.status(400).json({ error: "Valid websiteId is required" });
+    const category = await BlogCategory.create({ websiteId, name, slug: slugify(slug || name), status: status || "active" });
     res.status(201).json(category);
   } catch (error) {
     handleError(res, error);
   }
 });
 
-// List blog categories; ?status=active to filter, ?search= to search by name
+// List blog categories; ?websiteId= to scope to one site, ?status=active to filter, ?search= to search by name
 router.get("/", async (req, res) => {
   try {
     const filter = {};
+    if (req.query.websiteId) filter.websiteId = req.query.websiteId;
     if (req.query.status) filter.status = req.query.status;
     if (req.query.search) filter.name = { $regex: req.query.search, $options: "i" };
     const categories = await BlogCategory.find(filter).sort({ createdAt: 1 });
@@ -56,6 +61,10 @@ router.put("/:id", adminAuth, async (req, res) => {
   try {
     const updates = { ...req.body };
     if (updates.slug || updates.name) updates.slug = slugify(updates.slug || updates.name);
+    if (updates.websiteId) {
+      const website = await Website.findById(updates.websiteId).catch(() => null);
+      if (!website) return res.status(400).json({ error: "Valid websiteId is required" });
+    }
     const category = await BlogCategory.findByIdAndUpdate(req.params.id, updates, { new: true, runValidators: true });
     if (!category) return res.status(404).json({ error: "Category not found" });
     res.json(category);

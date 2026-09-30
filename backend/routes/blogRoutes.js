@@ -43,10 +43,11 @@ function withCategory(blogDoc) {
 
 const CATEGORY_POPULATE = { path: "categoryId", select: "name slug status" };
 
-async function requireCategoryId(categoryId) {
+async function requireCategoryId(categoryId, websiteId) {
   if (!categoryId) return "Category is required";
   const category = await BlogCategory.findById(categoryId).catch(() => null);
   if (!category) return "Valid categoryId is required";
+  if (websiteId && String(category.websiteId) !== String(websiteId)) return "Category does not belong to the selected website";
   return null;
 }
 
@@ -54,7 +55,7 @@ router.post("/create", adminAuth, async (req, res) => {
   try {
     const website = await Website.findById(req.body.websiteId);
     if (!website) return res.status(400).json({ error: "Valid websiteId is required" });
-    const categoryError = await requireCategoryId(req.body.categoryId);
+    const categoryError = await requireCategoryId(req.body.categoryId, req.body.websiteId);
     if (categoryError) return res.status(400).json({ error: categoryError });
     const payload = { ...req.body, slug: slugify(req.body.slug || req.body.title) };
     if (payload.status === "published") payload.publishedAt = new Date();
@@ -79,7 +80,9 @@ router.get("/", adminAuth, async (req, res) => {
     const filter = {};
     if (req.query.websiteId) filter.websiteId = req.query.websiteId;
     if (req.query.category) {
-      const category = await BlogCategory.findOne({ slug: req.query.category.toLowerCase() });
+      const categoryFilter = { slug: req.query.category.toLowerCase() };
+      if (req.query.websiteId) categoryFilter.websiteId = req.query.websiteId;
+      const category = await BlogCategory.findOne(categoryFilter);
       if (!category) return res.json([]);
       filter.categoryId = category._id;
     }
@@ -100,7 +103,7 @@ router.get("/public/:domain", async (req, res) => {
     const limit = Math.min(Math.max(Number(req.query.limit) || 10, 1), 50);
     const filter = { websiteId: website._id, status: "published" };
     if (req.query.category) {
-      const category = await BlogCategory.findOne({ slug: req.query.category.toLowerCase() });
+      const category = await BlogCategory.findOne({ slug: req.query.category.toLowerCase(), websiteId: website._id });
       if (!category) return res.json({ website, blogs: [], pagination: { page, limit, total: 0, pages: 0 } });
       filter.categoryId = category._id;
     }
@@ -138,7 +141,7 @@ router.get("/website/:websiteId", async (req, res) => {
   try {
     const filter = { websiteId: req.params.websiteId, status: "published" };
     if (req.query.category) {
-      const category = await BlogCategory.findOne({ slug: req.query.category.toLowerCase() });
+      const category = await BlogCategory.findOne({ slug: req.query.category.toLowerCase(), websiteId: req.params.websiteId });
       if (!category) return res.json([]);
       filter.categoryId = category._id;
     }
@@ -165,7 +168,8 @@ router.put("/update/:id", adminAuth, async (req, res) => {
   try {
     const payload = { ...req.body };
     if (payload.categoryId) {
-      const categoryError = await requireCategoryId(payload.categoryId);
+      const websiteId = payload.websiteId || (await Blog.findById(req.params.id).select("websiteId"))?.websiteId;
+      const categoryError = await requireCategoryId(payload.categoryId, websiteId);
       if (categoryError) return res.status(400).json({ error: categoryError });
     }
     if (payload.slug || payload.title) payload.slug = slugify(payload.slug || payload.title);
