@@ -25,6 +25,10 @@ const EditBlog = () => {
   const [categoryId, setCategoryId] = useState("");
   const [categories, setCategories] = useState([]);
   const [images, setImages] = useState([]);
+  const [status, setStatus] = useState("draft");
+  const [featuredImage, setFeaturedImage] = useState("");
+  const [featuredImageAlt, setFeaturedImageAlt] = useState("");
+  const [uploadingFeatured, setUploadingFeatured] = useState(false);
   // Fetch websites
   useEffect(() => {
     api
@@ -62,6 +66,9 @@ const EditBlog = () => {
       setWebsiteId(b.websiteId?._id || b.websiteId);
       setCategoryId(b.categoryId?._id || b.categoryId || "");
       setImages(b.images || []);
+      setStatus(b.status || "draft");
+      setFeaturedImage(b.featuredImage || "");
+      setFeaturedImageAlt(b.featuredImageAlt || "");
 
       setLoading(false);
     })
@@ -94,6 +101,26 @@ const EditBlog = () => {
   // Remove image
   const removeImage = (img) => {
     setImages(images.filter((i) => i !== img));
+  };
+
+  // Upload (or replace) the blog card / featured image
+  const handleFeaturedImageUpload = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const formData = new FormData();
+    formData.append("image", file);
+    setUploadingFeatured(true);
+    try {
+      const res = await api.post(`${API_BASE}/blogs/upload-image`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      setFeaturedImage(res.data.url);
+    } catch (err) {
+      console.error(err);
+      alert("Featured image upload failed");
+    } finally {
+      setUploadingFeatured(false);
+    }
   };
 
   const quillRef = useRef(null);
@@ -147,6 +174,9 @@ const EditBlog = () => {
       websiteId,
       categoryId,
       images,
+      status,
+      featuredImage,
+      featuredImageAlt,
     };
 
     try {
@@ -229,6 +259,30 @@ const EditBlog = () => {
           </option>
         ))}
       </select>
+
+      {/* Status */}
+      <label>Status</label>
+      <select
+        className="form-control mb-3"
+        value={status}
+        onChange={(e) => setStatus(e.target.value)}
+      >
+        <option value="draft">Draft</option>
+        <option value="published">Published</option>
+      </select>
+
+      {/* Featured / Blog Card Image */}
+      <label>Blog Card Image</label>
+      <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "15px" }}>
+        {featuredImage && <img src={featuredImage} alt={featuredImageAlt || "Blog card preview"} width="160" style={{ borderRadius: 5 }} />}
+        <input type="file" accept="image/*" onChange={handleFeaturedImageUpload} disabled={uploadingFeatured} />
+      </div>
+      <label>Image ALT Text</label>
+      <input
+        className="form-control mb-3"
+        value={featuredImageAlt}
+        onChange={(e) => setFeaturedImageAlt(e.target.value)}
+      />
 
       {/* Meta Title */}
       <label>Meta Title</label>
