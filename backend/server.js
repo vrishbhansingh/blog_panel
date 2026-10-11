@@ -14,9 +14,12 @@ const blogCategoryRoutes = require("./routes/blogCategoryRoutes.js");
 const websiteRoutes = require("./routes/websiteRoutes.js");
 const inquiryRoutes = require("./routes/inquiryRoutes.js");
 const settingsRoutes = require("./routes/settingsRoutes.js");
+const Website = require("./models/Website.js");
+const Blog = require("./models/Blog.js");
 
 const app = express();
 const PORT = process.env.PORT || 5014;
+app.set("trust proxy", true);
 
 app.use(express.json({ limit: "2mb" }));
 app.use(cors({
@@ -43,6 +46,39 @@ app.use("/api/settings", settingsRoutes);
 
 app.get("/health", (req, res) => {
   res.json({ ok: true, database: mongoose.connection.readyState === 1 ? "connected" : "disconnected" });
+});
+
+// When the website domain proxies these two paths to this server, visitors and
+// search engines get the conventional URLs: https://example.com/sitemap.xml
+// and https://example.com/robots.txt. The /api/websites/public/... versions
+// remain available for sites that cannot configure a reverse proxy.
+const escapeXml = (value) => String(value).replace(/[<>&'\"]/g, (char) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", "'": "&apos;", '\"': "&quot;" }[char]));
+const requestDomain = (req) => String(req.hostname || "").replace(/^www\./i, "").toLowerCase();
+const getHostedWebsite = (req) => Website.findOne({ domain: requestDomain(req), active: { $ne: false } });
+
+app.get("/robots.txt", async (req, res, next) => {
+  try {
+    const website = await getHostedWebsite(req);
+    if (!website) return next();
+    const robots = website.technical?.robotsTxt || "User-agent: *\nAllow: /";
+    res.type("text/plain").send(`${robots.trim()}\nSitemap: https://${website.domain}/sitemap.xml\n`);
+  } catch (error) { next(error); }
+});
+
+app.get("/sitemap.xml", async (req, res, next) => {
+  try {
+    const website = await getHostedWebsite(req);
+    if (!website) return next();
+    const blogPath = (website.technical?.blogPath || "/blog").replace(/\/$/, "");
+    const blogs = website.technical?.includeBlogsInSitemap === false ? [] : await Blog.find({
+      websiteId: website._id, status: "published", robotsIndex: { $ne: "noindex" },
+    }).select("slug createdAt publishedAt updatedAt").sort({ publishedAt: -1 });
+    const urls = [
+      `<url><loc>https://${escapeXml(website.domain)}/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>`,
+      ...blogs.map((blog) => `<url><loc>https://${escapeXml(website.domain)}${blogPath}/${escapeXml(blog.slug)}</loc><lastmod>${(blog.updatedAt || blog.publishedAt || blog.createdAt).toISOString()}</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>`),
+    ].join("");
+    res.type("application/xml").send(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls}</urlset>`);
+  } catch (error) { next(error); }
 });
 
 // Serves the built admin panel (admin/build copied here as "public") from the same

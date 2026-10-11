@@ -18,6 +18,7 @@ const faviconUpload = multer({
 
 const normalizeDomain = (value) => value.replace(/^https?:\/\//i, "").replace(/^www\./i, "").replace(/\/$/, "").toLowerCase();
 const escapeXml = (value) => String(value).replace(/[<>&'\"]/g, (char) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", "'": "&apos;", '\"': "&quot;" }[char]));
+const publicSiteUrl = (website) => `https://${normalizeDomain(website.domain)}`;
 
 function handleError(res, error) {
   if (error.code === 11000) return res.status(409).json({ success: false, error: "Domain already exists" });
@@ -70,7 +71,7 @@ router.get("/public/:domain/robots.txt", async (req, res) => {
     const website = await Website.findOne({ domain: normalizeDomain(req.params.domain), active: { $ne: false } });
     if (!website) return res.status(404).type("text/plain").send("Website not found");
     const robots = website.technical?.robotsTxt || "User-agent: *\nAllow: /";
-    res.type("text/plain").send(`${robots.trim()}\nSitemap: https://${website.domain}/sitemap.xml\n`);
+    res.type("text/plain").send(`${robots.trim()}\nSitemap: ${publicSiteUrl(website)}/sitemap.xml\n`);
   } catch (error) {
     handleError(res, error);
   }
@@ -81,9 +82,17 @@ router.get("/public/:domain/sitemap.xml", async (req, res) => {
     const website = await Website.findOne({ domain: normalizeDomain(req.params.domain), active: { $ne: false } });
     if (!website) return res.status(404).type("text/plain").send("Website not found");
     const blogPath = (website.technical?.blogPath || "/blog").replace(/\/$/, "");
-    const blogs = website.technical?.includeBlogsInSitemap === false ? [] : await Blog.find({ websiteId: website._id, status: "published" }).select("slug publishedAt createdAt").sort({ publishedAt: -1 });
-    const urls = [`<url><loc>${escapeXml(`https://${website.domain}/`)}</loc></url>`, ...blogs.map((blog) => `<url><loc>${escapeXml(`https://${website.domain}${blogPath}/${blog.slug}`)}</loc><lastmod>${(blog.publishedAt || blog.createdAt).toISOString()}</lastmod></url>`)].join("");
-    res.type("application/xml").send(`<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls}</urlset>`);
+    const blogs = website.technical?.includeBlogsInSitemap === false ? [] : await Blog.find({
+      websiteId: website._id,
+      status: "published",
+      robotsIndex: { $ne: "noindex" },
+    }).select("slug publishedAt createdAt updatedAt").sort({ publishedAt: -1 });
+    const siteUrl = publicSiteUrl(website);
+    const urls = [
+      `<url><loc>${escapeXml(`${siteUrl}/`)}</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>`,
+      ...blogs.map((blog) => `<url><loc>${escapeXml(`${siteUrl}${blogPath}/${blog.slug}`)}</loc><lastmod>${(blog.updatedAt || blog.publishedAt || blog.createdAt).toISOString()}</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>`),
+    ].join("");
+    res.type("application/xml").send(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls}</urlset>`);
   } catch (error) {
     handleError(res, error);
   }

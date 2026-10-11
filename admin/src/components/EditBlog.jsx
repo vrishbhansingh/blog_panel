@@ -1,11 +1,9 @@
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import api from "../api";
-import ReactQuill from "react-quill-new";
-import "react-quill-new/dist/quill.snow.css";
 import { useParams, useNavigate } from "react-router-dom";
+import RichTextEditor from "./RichTextEditor";
 
 const API_BASE = "/api";
-const quillFormats = ["header", "bold", "italic", "underline", "strike", "blockquote", "list", "indent", "link", "image", "video", "code-block"];
 
 const EditBlog = () => {
   const { id } = useParams();
@@ -123,39 +121,12 @@ const EditBlog = () => {
     }
   };
 
-  const quillRef = useRef(null);
-  const quillImageHandler = () => {
-    const input = document.createElement("input");
-    input.type = "file"; input.accept = "image/*";
-    input.onchange = async () => {
-      const file = input.files?.[0];
-      if (!file) return;
-      try {
-        const formData = new FormData();
-        formData.append("image", file);
-        const res = await api.post(`${API_BASE}/blogs/upload-image`, formData, { headers: { "Content-Type": "multipart/form-data" } });
-        const url = res.data.url;
-        const editor = quillRef.current?.getEditor();
-        const range = editor?.getSelection(true);
-        editor?.insertEmbed(range ? range.index : 0, "image", url, "user");
-        editor?.setSelection((range ? range.index : 0) + 1);
-      } catch (err) { console.error(err); }
-    };
-    input.click();
+  const uploadEditorImage = async (file) => {
+    const formData = new FormData();
+    formData.append("image", file);
+    const res = await api.post(`${API_BASE}/blogs/upload-image`, formData, { headers: { "Content-Type": "multipart/form-data" } });
+    return res.data.url;
   };
-  const quillModules = useMemo(() => ({
-    toolbar: {
-      container: [
-        [{ header: [2, 3, false] }],
-        ["bold", "italic", "underline", "strike"],
-        [{ list: "ordered" }, { list: "bullet" }, { indent: "-1" }, { indent: "+1" }],
-        ["blockquote", "code-block"],
-        ["link", "image", "video"],
-        ["clean"],
-      ],
-      handlers: { image: quillImageHandler },
-    },
-  }), []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Update blog
   const handleUpdate = async () => {
@@ -351,9 +322,7 @@ const EditBlog = () => {
 
       {/* Editor */}
       <label>Blog Content *</label>
-      <div className="quill-editor-wrap">
-        <ReactQuill ref={quillRef} theme="snow" value={content} onChange={setContent} modules={quillModules} formats={quillFormats} />
-      </div>
+      <RichTextEditor value={content} onChange={setContent} uploadImage={uploadEditorImage} />
 
       {/* Buttons */}
       <div className="d-flex gap-3 mt-4">

@@ -2048,6 +2048,27 @@
 .quill-editor-wrap .ql-editor {
   min-height: 480px;
 }
+.rich-text-editor .ql-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+}
+.rich-text-editor .ql-editor table {
+  width: 100%;
+  margin: 1em 0;
+  border-collapse: collapse;
+}
+.rich-text-editor .ql-editor td,
+.rich-text-editor .ql-editor th {
+  min-width: 70px;
+  padding: 8px;
+  border: 1px solid #b8c0b5;
+  vertical-align: top;
+}
+.rich-text-editor .ql-editor th {
+  background: #f1f4ef;
+  font-weight: 700;
+}
 .image-upload-box {
   min-height: 225px;
   padding: 16px;

@@ -167,13 +167,17 @@ router.get("/slug/:slug", async (req, res) => {
 router.put("/update/:id", adminAuth, async (req, res) => {
   try {
     const payload = { ...req.body };
+    const existingBlog = await Blog.findById(req.params.id).select("websiteId status publishedAt");
+    if (!existingBlog) return res.status(404).json({ error: "Blog not found" });
     if (payload.categoryId) {
-      const websiteId = payload.websiteId || (await Blog.findById(req.params.id).select("websiteId"))?.websiteId;
+      const websiteId = payload.websiteId || existingBlog.websiteId;
       const categoryError = await requireCategoryId(payload.categoryId, websiteId);
       if (categoryError) return res.status(400).json({ error: categoryError });
     }
     if (payload.slug || payload.title) payload.slug = slugify(payload.slug || payload.title);
-    if (payload.status === "published") payload.publishedAt = new Date();
+    // Keep the first publish date. `updatedAt` is maintained by Mongoose and
+    // becomes the sitemap's lastmod value whenever the post is edited.
+    if (payload.status === "published" && !existingBlog.publishedAt) payload.publishedAt = new Date();
     const blog = await Blog.findByIdAndUpdate(req.params.id, payload, { new: true, runValidators: true }).populate(CATEGORY_POPULATE);
     if (!blog) return res.status(404).json({ error: "Blog not found" });
     res.json({ message: "Blog updated", blog: withCategory(blog) });

@@ -61,7 +61,7 @@ const BlogSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
-});
+}, { timestamps: { createdAt: false, updatedAt: true } });
 
 BlogSchema.index({ websiteId: 1, slug: 1 }, { unique: true });
 
