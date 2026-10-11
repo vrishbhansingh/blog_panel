@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import api from "../api";
 import { useParams, useNavigate } from "react-router-dom";
 import RichTextEditor from "./RichTextEditor";
+import { portableRichTextHtml } from "../utils/portableRichText";
 
 const API_BASE = "/api";
 
@@ -138,7 +139,7 @@ const EditBlog = () => {
     const payload = {
       title,
       slug,
-      content,
+      content: portableRichTextHtml(content),
       metaTitle,
       metaDescription,
       metaKeyword,

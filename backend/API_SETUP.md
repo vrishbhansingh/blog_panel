@@ -95,6 +95,19 @@ const { blogs } = await response.json();
 
 The frontend uses `blogs` to render cards. A blog detail page calls the single-blog URL with its slug.
 
+### Render rich blog content
+
+`blog.content` is HTML. Render it as HTML inside the blog article, not as plain
+text. Headings, bold text, ordered lists and bullet lists are saved as standard
+HTML, so numbered lists made in the panel also show on the public website.
+
+```jsx
+<article className="blog-content" dangerouslySetInnerHTML={{ __html: blog.content }} />
+```
+
+Only use this with content from this trusted admin panel. Do not pass arbitrary
+visitor-supplied HTML to `dangerouslySetInnerHTML`.
+
 ## 5. WordPress frontend
 
 WordPress can read the same public endpoint. Example shortcode for a small custom plugin or `functions.php`:

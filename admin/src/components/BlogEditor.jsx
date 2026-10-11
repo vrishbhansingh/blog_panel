@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import api from "../api";
 import { useNavigate } from "react-router-dom";
 import RichTextEditor from "./RichTextEditor";
+import { portableRichTextHtml } from "../utils/portableRichText";
 
 
 const tabs = ["Content", "SEO", "Images", "FAQ", "Related"];
@@ -74,7 +75,7 @@ const BlogEditor = () => {
     if (!form.categoryId) { alert("Please select a category."); return; }
     setSaving(true);
     const payload = {
-      ...form, tags: form.tags.split(",").map((v) => v.trim()).filter(Boolean),
+      ...form, content: portableRichTextHtml(form.content), tags: form.tags.split(",").map((v) => v.trim()).filter(Boolean),
       secondaryKeywords: form.secondaryKeywords.split(",").map((v) => v.trim()).filter(Boolean), metaKeyword: form.secondaryKeywords,
       faqs: form.faqs.filter((item) => item.question && item.answer), internalLinks: form.internalLinks.filter((item) => item.label && item.url),
       externalLinks: form.externalLinks.filter((item) => item.label && item.url), publishedAt: form.status === "published" ? form.publishDate : null,
