@@ -631,6 +631,44 @@
   color: var(--green);
   font-size: 12px;
 }
+.seo-sitemap-card {
+  margin: 0 24px;
+  padding: 16px;
+  border: 1px solid #cfe0c0;
+  border-radius: 10px;
+  background: #f6faf3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+.seo-sitemap-card .eyebrow,
+.seo-sitemap-card strong,
+.seo-sitemap-card p,
+.seo-sitemap-card code {
+  display: block;
+}
+.seo-sitemap-card strong { margin-top: 3px; }
+.seo-sitemap-card p {
+  margin: 4px 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+.seo-sitemap-card code {
+  color: var(--green);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.seo-sitemap-card a {
+  flex: 0 0 auto;
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: var(--green);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+}
 .tabs {
   display: flex;
   gap: 25px;

@@ -10,6 +10,7 @@ const SEOManager = () => {
   const [notice, setNotice] = useState("");
   const [saving, setSaving] = useState(false);
   const selected = useMemo(() => sites.find((site) => site._id === selectedId), [sites, selectedId]);
+  const sitemapUrl = selected ? `https://${selected.domain}/sitemap.xml` : "";
 
   const loadSites = async () => {
     const { data } = await api.get("/api/websites/all");
@@ -65,6 +66,10 @@ const SEOManager = () => {
                 <div><span className="site-favicon large">{selected.faviconUrl ? <img src={selected.faviconUrl} alt="" /> : selected.name.charAt(0)}</span></div>
                 <div className="property-title"><span className="eyebrow">SELECTED PROPERTY</span><h2>{selected.name}</h2><a href={`https://${selected.domain}`} target="_blank" rel="noreferrer">{selected.domain} ↗</a></div>
               </div>
+              <section className="seo-sitemap-card" aria-label="Sitemap">
+                <div><span className="eyebrow">SITEMAP</span><strong>sitemap.xml</strong><p>Submit this exact URL in Google Search Console.</p><code>{sitemapUrl}</code></div>
+                <a href={sitemapUrl} target="_blank" rel="noreferrer">Open sitemap ↗</a>
+              </section>
               <div className="form-grid">
                 <label>Site title <span>{seo.siteTitle.length}/60</span><input maxLength="60" value={seo.siteTitle} onChange={(e) => setField("siteTitle", e.target.value)} /></label>
                 <label>Twitter handle<input value={seo.twitterHandle} onChange={(e) => setField("twitterHandle", e.target.value)} placeholder="@brand" /></label>
