@@ -23,6 +23,11 @@ const RichTextEditor = ({ value, onChange, uploadImage }) => {
         import("tinymce/icons/default"),
         import("tinymce/themes/silver"),
         import("tinymce/models/dom"),
+        // The npm build of TinyMCE cannot fetch its skin at runtime. Without
+        // these bundled skin files the editor renders as an empty/invisible box.
+        import("tinymce/skins/ui/oxide/skin"),
+        import("tinymce/skins/ui/oxide/content"),
+        import("tinymce/skins/content/default/content"),
         import("tinymce/plugins/advlist"),
         import("tinymce/plugins/autolink"),
         import("tinymce/plugins/code"),

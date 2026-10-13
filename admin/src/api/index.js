@@ -12,6 +12,22 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// A saved key the backend no longer accepts (wrong server, changed password)
+// would otherwise leave every page failing silently. Drop the session and
+// return to the login page. The login request itself is left to show its own error.
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const onLoginPage = window.location.pathname === '/login';
+    const sentKey = Boolean(error.config?.headers?.['x-admin-key']);
+    if (error.response?.status === 401 && sentKey && !onLoginPage) {
+      ['adminApiKey', 'isLoggedIn', 'adminUsername'].forEach((key) => localStorage.removeItem(key));
+      window.location.assign('/login');
+    }
+    return Promise.reject(error);
+  }
+);
+
 // --- Category APIs ---
 export const fetchCategories = () => api.get('/categories');
 export const createCategory = (categoryData) => api.post('/categories', categoryData);
